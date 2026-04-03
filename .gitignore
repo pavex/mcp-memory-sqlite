@@ -1,3 +1,4 @@
+.gitignore
 .storage/
 .knowledge.md
 dist/
