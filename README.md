@@ -1,6 +1,16 @@
+# Persistent SQLite Memory Server for Claude and LLM Agents
+
+> **Give your AI a long-term memory it actually remembers.** `mcp-memory-sqlite` is a lightweight [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server designed for Claude and other LLM agents. It stores structured knowledge in a local SQLite database with full-text search, topic organisation, importance levels, and built-in memory defragmentation — no cloud, no vendor lock-in, no unnecessary dependencies.
+
+**Designed for Claude Desktop. Built with love for every user who ever wished their AI could just... remember.** 🧠
+
+---
+
 # 🧠 mcp-memory-sqlite
 
-> MCP server — persistent LLM memory backed by SQLite with full-text search.
+**Keywords:** MCP server, Claude memory, persistent memory, Claude Desktop, SQLite MCP, long-term memory, Model Context Protocol, AI memory, LLM memory, claude-desktop
+
+---
 
 ## Features
 
@@ -40,7 +50,7 @@
 
 ```bash
 npm install
-npm run build   # → dist/mcp.js (~17 KB)
+npm run build   # → dist/mcp.js (~12 KB, minified)
 ```
 
 ---
@@ -157,7 +167,7 @@ mcp-memory-sqlite/
 │   ├── tools.js     # Tool definitions (plain JSON Schema)
 │   └── handlers.js  # Business logic for each tool
 ├── dist/
-│   └── mcp.js       # Bundled output (esbuild, better-sqlite3 external)
+│   └── mcp.js       # Bundled + minified output (esbuild, better-sqlite3 external)
 ├── package.json
 └── README.md
 ```
