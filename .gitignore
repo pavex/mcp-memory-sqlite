@@ -1,0 +1,6 @@
+.storage/
+.knowledge.md
+dist/
+node_modules/
+package-lock.json
+TODO.md
