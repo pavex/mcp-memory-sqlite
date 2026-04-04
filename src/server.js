@@ -10,10 +10,12 @@ export class McpStdioServer {
   #version;
   #tools = new Map();   // name → { description, inputSchema, handler }
   #buffer = '';
+  #onAfterCall;         // optional callback invoked after every tools/call
 
-  constructor(name, version) {
+  constructor(name, version, { onAfterCall } = {}) {
     this.#name = name;
     this.#version = version;
+    this.#onAfterCall = onAfterCall ?? null;
   }
 
   /** Register a tool.
@@ -52,6 +54,8 @@ export class McpStdioServer {
       return; // initialized, cancelled, etc.
     }
 
+    const isToolCall = msg.method === 'tools/call';
+
     try {
       const result = this.#dispatch(msg);
       this.#send({ jsonrpc: '2.0', id: msg.id, result });
@@ -60,6 +64,10 @@ export class McpStdioServer {
         jsonrpc: '2.0', id: msg.id,
         error: { code: e.code ?? -32603, message: e.message ?? String(e) },
       });
+    } finally {
+      if (isToolCall && this.#onAfterCall) {
+        try { this.#onAfterCall(); } catch { /* neblokovat server */ }
+      }
     }
   }
 
