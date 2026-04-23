@@ -1,8 +1,11 @@
+.project
+.gemini
+.claude
 .gitignore
 .storage/
-.knowledge.md
 *.bak
 dist/
+test/
 node_modules/
 package-lock.json
-TODO.md
+build.cmd

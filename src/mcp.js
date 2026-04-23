@@ -1,70 +1,47 @@
-#!/usr/bin/env node
-/**
- * mcp-memory-sqlite — Entry Point
- *
- * Usage:
- *   node src/mcp.js [name_or_path]
- *
- *   name_or_path:
- *     - omitted            → .storage/memory.db  (next to mcp.js)
- *     - plain name         → .storage/<n>.db
- *     - path with / or \   → used directly (absolute or cwd-relative)
- */
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
+import { InstallerDatastore } from './Datastore/InstallerDatastore.js';
+import { MemoryDatastore } from './Datastore/MemoryDatastore.js';
+import { ToolDefinitions } from './Tools/ToolDefinitions.js';
+import { Config } from './Config.js';
 
-import { resolve, dirname, join } from 'node:path';
-import { fileURLToPath }          from 'node:url';
-import { existsSync, mkdirSync }  from 'node:fs';
+new InstallerDatastore(Config.DB_PATH);
+const repo = new MemoryDatastore(Config.DB_PATH);
+const context = { repo };
 
-import { openDatabase }   from './db.js';
-import { tools }          from './tools.js';
-import { createHandlers } from './handlers.js';
-import { McpStdioServer } from './server.js';
+const server = new Server(
+  { name: Config.MCP_SERVER_NAME, version: Config.MCP_SERVER_VERSION },
+  { capabilities: { tools: {} } }
+);
 
-// --- resolve DB path ---
-const __dir = dirname(fileURLToPath(import.meta.url));
-const raw   = process.argv[2] ?? 'memory';
+const handlers = new Map(ToolDefinitions.map(t => [t.name, t.handler]));
 
-let dbPath;
-if (raw.includes('/') || raw.includes('\\')) {
-  dbPath = resolve(raw);
-} else {
-  const storageDir = join(__dir, '.storage');
-  if (!existsSync(storageDir)) mkdirSync(storageDir, { recursive: true });
-  dbPath = join(storageDir, `${raw}.db`);
-}
+import { zodToJsonSchema } from 'zod-to-json-schema';
+// ...
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: ToolDefinitions.map(t => ({
+    name: t.name,
+    description: t.description,
+    inputSchema: zodToJsonSchema(t.inputSchema)
+  }))
+}));
 
-// --- open DB ---
-const store    = openDatabase(dbPath);
-const handlers = createHandlers(store);
+server.setRequestHandler(CallToolRequestSchema, async (req) => {
+  const { name, arguments: args } = req.params;
+  const handler = handlers.get(name);
+  if (!handler) return { content: [{ type: 'text', text: `Error: Unknown tool ${name}` }], isError: true };
 
-// --- DB shutdown helper ---
-// Po každém tool callu zapíšeme WAL do hlavního .db souboru a ořežeme ho.
-// Tím zůstane na disku vždy čistý .db bez -wal a -shm souborů.
-function checkpoint() {
   try {
-    store.db.pragma('wal_checkpoint(TRUNCATE)');
-  } catch { /* neblokovat server */ }
-}
-
-function shutdown() {
-  try {
-    store.db.pragma('wal_checkpoint(TRUNCATE)');
-    store.db.close();
-  } catch { /* ignorovat chyby při ukončení */ }
-}
-
-// Zavřít DB při všech standardních ukončeních procesu
-process.on('exit',    shutdown);
-process.on('SIGINT',  () => { shutdown(); process.exit(0); });
-process.on('SIGTERM', () => { shutdown(); process.exit(0); });
-
-// --- register tools & start ---
-const server = new McpStdioServer('mcp-memory-sqlite', '0.1.0', {
-  onAfterCall: checkpoint,
+    const result = await handler(args, context);
+    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+  } catch (e) {
+    return {
+      content: [{ type: 'text', text: e instanceof z.ZodError ? `Validation Error: ${e.message}` : `Error: ${e.message}` }],
+      isError: true
+    };
+  }
 });
 
-for (const tool of Object.values(tools)) {
-  server.tool(tool.name, tool.description, tool.inputSchema, handlers[tool.name]);
-}
-
-server.start();
+await server.connect(new StdioServerTransport());
