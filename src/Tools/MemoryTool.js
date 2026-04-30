@@ -5,7 +5,7 @@ const fts = (t) => t.replace(/[^\p{L}\p{N}]/gu, ' ').trim().split(/\s+/).slice(0
 export const MemoryTools = [
   {
     name: 'add',
-    description: 'Store a new piece of information.',
+    description: 'Store a new memory. Checks for duplicates in the same topic first.',
     inputSchema: Schemas.add,
     handler: async (args, { repo }) => {
       const data = { topic: 'general', keywords: '', importance: 3, ...args };
@@ -19,7 +19,7 @@ export const MemoryTools = [
   },
   {
     name: 'update',
-    description: 'Update memory by ID.',
+    description: 'Update content, keywords or importance of a memory by ID.',
     inputSchema: Schemas.update,
     handler: async (args, { repo }) => {
       if (!repo.getById(args.id)) throw new Error(`Memory #${args.id} not found.`);
@@ -30,7 +30,7 @@ export const MemoryTools = [
   },
   {
     name: 'delete',
-    description: 'Delete memory by ID.',
+    description: 'Delete a memory by ID.',
     inputSchema: Schemas.delete,
     handler: async (args, { repo }) => {
       if (!repo.getById(args.id)) throw new Error(`Memory #${args.id} not found.`);
@@ -40,7 +40,7 @@ export const MemoryTools = [
   },
   {
     name: 'get',
-    description: 'Fetch memory by ID.',
+    description: 'Fetch a single memory by ID.',
     inputSchema: Schemas.get,
     handler: async (args, { repo }) => {
       const row = repo.getById(args.id);
@@ -50,13 +50,7 @@ export const MemoryTools = [
   },
   {
     name: 'list',
-    description: [
-      'List memories.',
-      'BOOTSTRAP INSTRUCTION: At the start of every session, call list(topic="_bootstrap", limit=1) FIRST.',
-      'The _bootstrap record contains user identity, workflow rules, and a memory_map with exact IDs for all key records.',
-      'Use the memory_map to fetch additional records by ID instead of searching blindly.',
-      'Minimum calls strategy: 1) list _bootstrap → 2) get(id) for active project → done.'
-    ].join(' '),
+    description: 'List memories. SESSION START: call list(topic="_bootstrap",limit=1) first — contains identity, workflow rules, and memory_map with exact record IDs.',
     inputSchema: Schemas.list,
     handler: async (args, { repo }) => {
       const d = { limit: 50, ...args };
@@ -66,7 +60,7 @@ export const MemoryTools = [
   },
   {
     name: 'search',
-    description: 'Search memories.',
+    description: 'Full-text search across content, topic and keywords.',
     inputSchema: Schemas.search,
     handler: async (args, { repo }) => {
       const q = fts(args.query);
@@ -75,12 +69,7 @@ export const MemoryTools = [
   },
   {
     name: 'topics',
-    description: [
-      'List topics.',
-      'NOTE: Prefer the bootstrap strategy over listing topics.',
-      'Call list(topic="_bootstrap", limit=1) at session start to get identity, rules, and a memory_map with exact record IDs.',
-      'Only fall back to topics() if _bootstrap record does not exist yet.'
-    ].join(' '),
+    description: 'List all topics. Fallback only — prefer list(topic="_bootstrap",limit=1) at session start.',
     inputSchema: Schemas.topics,
     handler: async (_, { repo }) => ({ success: true, topics: repo.listTopics() })
   }
