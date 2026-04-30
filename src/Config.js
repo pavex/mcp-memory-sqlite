@@ -4,17 +4,19 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
-// --- Resolution logic ------------------------------------------------------
+// --- DB path resolution ----------------------------------------------------
+// argv[2] can be:
+//   (none)          → .var/memory.db  (default)
+//   "work"          → .var/work.db    (named prefix)
+//   "/data/my.db"   → direct path     (contains / or \)
 
 const arg = process.argv[2];
 let dbPath = path.join(rootDir, '.var/memory.db');
 
 if (arg) {
-  // If it contains a slash, treat as direct path
   if (arg.includes('/') || arg.includes('\\')) {
     dbPath = path.isAbsolute(arg) ? arg : path.resolve(process.cwd(), arg);
   } else {
-    // Treat as simple name for .var/
     dbPath = path.join(rootDir, `.var/${arg.endsWith('.db') ? arg : arg + '.db'}`);
   }
 }

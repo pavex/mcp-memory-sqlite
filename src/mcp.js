@@ -1,6 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { z } from 'zod';
 import { InstallerDatastore } from './Datastore/InstallerDatastore.js';
 import { MemoryDatastore } from './Datastore/MemoryDatastore.js';
@@ -18,8 +19,6 @@ const server = new Server(
 
 const handlers = new Map(ToolDefinitions.map(t => [t.name, t.handler]));
 
-import { zodToJsonSchema } from 'zod-to-json-schema';
-// ...
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: ToolDefinitions.map(t => ({
     name: t.name,
@@ -43,5 +42,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     };
   }
 });
+
+// Release DB locks on exit. SIGINT/SIGTERM are Unix-only; process.on('exit') covers all platforms.
+process.on('exit', () => repo.close());
 
 await server.connect(new StdioServerTransport());
