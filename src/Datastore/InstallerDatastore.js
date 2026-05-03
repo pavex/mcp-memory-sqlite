@@ -7,15 +7,15 @@ export class InstallerDatastore {
   constructor(dbPath) {
     const db = new Database(dbPath, SqliteNativeBinding.options());
 
-    db.exec(`
+    const sql = `
       CREATE TABLE IF NOT EXISTS memories (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
         topic       TEXT    NOT NULL DEFAULT 'general',
         content     TEXT    NOT NULL,
         keywords    TEXT    NOT NULL DEFAULT '',
         importance  INTEGER NOT NULL DEFAULT 3,
-        created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
-        updated_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+        created_at  TEXT    NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%SZ', 'now')),
+        updated_at  TEXT    NOT NULL DEFAULT (STRFTIME('%Y-%m-%dT%H:%M:%SZ', 'now'))
       );
 
       CREATE INDEX IF NOT EXISTS idx_memories_topic
@@ -40,7 +40,9 @@ export class InstallerDatastore {
         INSERT INTO memories_fts(memories_fts, rowid, content, topic, keywords)
           VALUES ('delete', old.id, old.content, old.topic, old.keywords);
       END;
-    `);
+    `;
+
+    db.exec(sql);
 
     db.close();
   }
