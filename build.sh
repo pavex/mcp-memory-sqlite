@@ -4,7 +4,7 @@ set -euo pipefail
 echo "[1/4] Installing dependencies..."
 npm install --no-audit --no-fund
 
-echo "[2/4] Building dist/mcp.js + copying better_sqlite3.node... "
+echo "[2/4] Building dist/mcp.js + dist/stats.js + copying better_sqlite3.node..."
 npm run build
 
 echo "[3/4] Running tests..."
@@ -15,5 +15,6 @@ rm -rf node_modules package-lock.json
 
 echo ""
 echo "Done! dist/ is self-contained:"
-echo "  dist/mcp.js               - bundled server"
+echo "  dist/mcp.js               - bundled MCP server"
+echo "  dist/stats.js             - memory stats CLI"
 echo "  dist/better_sqlite3.node  - native SQLite binary"

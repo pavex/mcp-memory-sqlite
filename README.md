@@ -21,6 +21,7 @@
 - 🚀 **8 focused tools:** `add`, `update`, `delete`, `get`, `list`, `search`, `topics`, `dreaming`
 - 🧹 **`dreaming`** — paginated memory defragmentation with LLM workflow instructions
 - ⚡ **Bootstrap strategy** — `_bootstrap` record gives the agent identity + memory map in a single call
+- 📊 **`stats.js`** — standalone CLI dashboard showing topic distribution, importance and health indicators
 - 🔐 **Clean DB shutdown** — `repo.close()` is called on `SIGINT`, `SIGTERM` and `exit`, releasing WAL locks before any cleanup
 - 📦 **Self-contained build** — `dist/` contains everything including the native SQLite binary
 - ⚡ **Lightweight** — built on the official MCP SDK with minimal dependencies
@@ -85,6 +86,41 @@ node dist/mcp.js C:\notes\memory.db
 ```
 
 > **Note:** In direct-path mode the target directory must already exist.
+
+---
+
+## Memory Stats
+
+`stats.js` is a standalone CLI dashboard that reads the database directly — no MCP server required. It uses the **same argument convention** as `mcp.js`.
+
+```bash
+# Same DB as the default MCP instance
+node dist/stats.js
+
+# Named instance
+node dist/stats.js work
+
+# Direct path
+node dist/stats.js C:\notes\memory.db
+```
+
+**Example output:**
+
+```
+=== MEMORY STATS ===  48 records · 9 topics  .var/memory.db
+────────────────────────────────────────────────────────────────────────────────
+projects          ████████████████████░░░░░░░░░░  12  imp:4.2  today
+                  ↳ merkd, php, builder, sqlite
+coding            ████████████████░░░░░░░░░░░░░░   9  imp:3.8  yesterday
+                  ↳ javascript, nodejs, esbuild
+workflow          ████████░░░░░░░░░░░░░░░░░░░░░░   5  imp:4.5  3d ago
+────────────────────────────────────────────────────────────────────────────────
+⚠  3 records without keywords
+✓  No low-importance candidates
+────────────────────────────────────────────────────────────────────────────────
+```
+
+Color coding: 🟢 avg importance < 3.5 · 🟡 3.5–4.4 · 🔴 ≥ 4.5
 
 ---
 
@@ -267,6 +303,7 @@ CREATE INDEX idx_memories_topic ON memories(topic);
 mcp-memory-sqlite/
 ├── src/
 │   ├── mcp.js                        # Entry point — MCP server + graceful shutdown
+│   ├── stats.js                      # CLI memory dashboard (topic bars, health check)
 │   ├── Config.js                     # DB path resolution (argv, prefix, direct path)
 │   ├── Datastore/
 │   │   ├── InstallerDatastore.js     # Schema + trigger creation on first run
@@ -279,7 +316,8 @@ mcp-memory-sqlite/
 │   └── Utils/
 │       └── Schemas.js                # Zod input schemas for all tools
 ├── dist/                             # Self-contained build output
-│   ├── mcp.js                        # Bundled server (esbuild)
+│   ├── mcp.js                        # Bundled MCP server (esbuild)
+│   ├── stats.js                      # Bundled CLI stats utility (esbuild)
 │   └── better_sqlite3.node           # Native SQLite binary
 ├── test/
 │   ├── unit.js                       # Unit tests

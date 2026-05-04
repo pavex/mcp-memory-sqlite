@@ -5,12 +5,14 @@
   "type": "module",
   "main": "dist/mcp.js",
   "bin": {
-    "mcp-memory-sqlite": "dist/mcp.js"
+    "mcp-memory-sqlite": "dist/mcp.js",
+    "mcp-memory-stats": "dist/stats.js"
   },
   "scripts": {
     "start": "node dist/mcp.js",
     "dev": "node src/mcp.js",
-    "build": "esbuild src/mcp.js --bundle --platform=node --format=esm --outfile=dist/mcp.js --external:*.node --minify --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\" && node -e \"import('node:fs').then(fs=>fs.copyFileSync('node_modules/better-sqlite3/build/Release/better_sqlite3.node','dist/better_sqlite3.node'))\"",
+    "stats": "node dist/stats.js",
+    "build": "esbuild src/mcp.js --bundle --platform=node --format=esm --outfile=dist/mcp.js --external:*.node --minify --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\" && esbuild src/stats.js --bundle --platform=node --format=esm --outfile=dist/stats.js --external:*.node --minify --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\" && node -e \"import('node:fs').then(fs=>fs.copyFileSync('node_modules/better-sqlite3/build/Release/better_sqlite3.node','dist/better_sqlite3.node'))\"",
     "test": "node test/unit.js && node test/integration.js src && node test/integration.js dist"
   },
   "dependencies": {

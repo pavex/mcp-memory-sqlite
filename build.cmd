@@ -3,7 +3,7 @@ cls
 echo [1/4] Installing dependencies...
 call npm install --no-audit --no-fund
 
-echo [2/4] Building dist/mcp.js + copying better_sqlite3.node...
+echo [2/4] Building dist/mcp.js + dist/stats.js + copying better_sqlite3.node...
 call npm run build
 
 echo [3/4] Running tests...
@@ -15,5 +15,6 @@ if exist package-lock.json del /f /q package-lock.json
 
 echo.
 echo Done! dist/ is self-contained:
-echo   dist/mcp.js               - bundled server
+echo   dist/mcp.js               - bundled MCP server
+echo   dist/stats.js             - memory stats CLI
 echo   dist/better_sqlite3.node  - native SQLite binary
